@@ -12,7 +12,7 @@ const start = async () => {
 }
 
 app.get('/version', (req, res) => {
-  res.send('4')
+  res.send('4.0')
 })
 
 app.get('/health', (req, res) => {
