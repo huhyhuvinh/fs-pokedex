@@ -31,6 +31,35 @@ jobs:
       - name: Trigger deployment
         if: ${{ github.event_name == 'push' }}
         run: curl ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Notify success
+        if: ${{ success() && github.event_name == 'push' }}
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          nodetail: true
+          title: "Deployment Details"
+          description: |
+            **Commit**: ${{ github.sha }}
+            **Message**: ${{ github.event.head_commit.message }}
+            **Author**: ${{ github.actor }}
+      - name: Notify failure
+        if: ${{ failure() && github.event_name == 'push' }}
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          nodetail: true
+          title: "Failure Details"
+          description: |
+            **Repository**: ${{ github.repository }}
+            **Branch**: ${{ github.ref_name }}
+            **Commit**: ${{ github.sha }}
+            **Message**: ${{ github.event.head_commit.message }}
+            **Author**: ${{ github.actor }}
+            **Workflow**: ${{ github.workflow }}
+            **Job**: ${{ github.job }}
+            [View Commit](${{ github.event.head_commit.url }})
+            [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
   tag_release:
     needs: [simple_deployment_pipeline]
     runs-on: ubuntu-latest
@@ -40,7 +69,7 @@ jobs:
           fetch-depth: '0'
       - name: Bump version and push tag
         if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
-        uses: anothrNick/github-tag-action@1.75.0
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
